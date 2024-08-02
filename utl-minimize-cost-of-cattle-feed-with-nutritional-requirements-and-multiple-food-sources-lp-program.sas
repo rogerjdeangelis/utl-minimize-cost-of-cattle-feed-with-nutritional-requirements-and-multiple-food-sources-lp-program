@@ -4,6 +4,8 @@ Minimize cost of cattle feed with nutritional requirements using multiple food s
 
      TWO SOLUTIONS
 
+          0 sas optmodel
+            Rob Pratt <00000c5046759d08-dmarc-request@listserv.uga.edu>
           1 r no sas input
           2 r with sas input output
 
@@ -93,6 +95,110 @@ https://github.com/rogerjdeangelis/utl-minimize-cost-of-cattle-feed-with-nutriti
 /*  They are met                                                                                                          */
 /*                                                                                                                        */
 /**************************************************************************************************************************/
+
+/*___                                _                       _      _
+ / _ \   ___  __ _ ___    ___  _ __ | |_ _ __ ___   ___   __| | ___| |
+| | | | / __|/ _` / __|  / _ \| `_ \| __| `_ ` _ \ / _ \ / _` |/ _ \ |
+| |_| | \__ \ (_| \__ \ | (_) | |_) | |_| | | | | | (_) | (_| |  __/ |
+ \___/  |___/\__,_|___/  \___/| .__/ \__|_| |_| |_|\___/ \__,_|\___|_|
+ _                   _        |_|
+(_)_ __  _ __  _   _| |_
+| | `_ \| `_ \| | | | __|
+| | | | | |_) | |_| | |_
+|_|_| |_| .__/ \__,_|\__|
+        |_|
+*/
+
+
+data IngredientData;
+   input ingredient $ protein fiber energy cost;
+   datalines;
+Corn     9  2 3400 0.30
+Soybean 44  7 2300 0.50
+Hay     15 30 1800 0.20
+;
+data RhsData;
+   input constraint $ rhs;
+   datalines;
+Protein   18
+Fiber     25
+Energy  2500
+;
+/*
+ _ __  _ __ ___   ___ ___  ___ ___
+| `_ \| `__/ _ \ / __/ _ \/ __/ __|
+| |_) | | | (_) | (_|  __/\__ \__ \
+| .__/|_|  \___/ \___\___||___/___/
+|_|
+*/
+proc optmodel;
+   set <str> INGREDIENTS;
+   num protein {INGREDIENTS};
+   num fiber {INGREDIENTS};
+   num energy {INGREDIENTS};
+   num cost {INGREDIENTS};
+   read data IngredientData into INGREDIENTS=[ingredient] protein fiber energy cost;
+   set <str> CONSTRAINTS;
+   num rhs {CONSTRAINTS};
+   read data RhsData into CONSTRAINTS=[constraint] rhs;
+   var X {INGREDIENTS} >= 0;
+   min Z = sum {i in INGREDIENTS} cost[i] * X[i];
+   con ProteinCon:
+      sum {i in INGREDIENTS} protein[i] * X[i] >= rhs['Protein'];
+   con FiberCon:
+      sum {i in INGREDIENTS} fiber[i] * X[i] <= rhs['Fiber'];
+   con EnergyCon:
+      sum {i in INGREDIENTS} energy[i] * X[i] >= rhs['Energy'];
+   solve;
+   print X;
+quit;
+/*           _               _
+  ___  _   _| |_ _ __  _   _| |_
+ / _ \| | | | __| `_ \| | | | __|
+| (_) | |_| | |_| |_) | |_| | |_
+ \___/ \__,_|\__| .__/ \__,_|\__|
+                |_|
+*/
+The SAS System
+The OPTMODEL Procedure
+Problem Summary
+Objective Sense                    Minimization
+Objective Function                 Z
+Objective Type                     Linear
+Number of Variables                3
+Bounded Above                      0
+Bounded Below                      3
+Bounded Below and Above            0
+Free                               0
+Fixed                              0
+Number of Constraints              3
+Linear LE (<=)                     1
+Linear EQ (=)                      0
+Linear GE (>=)                     2
+Linear Range0
+Constraint Coefficients            9
+
+The SAS System
+The OPTMODEL Procedure
+Solution Summary
+Solver                             LP
+AlgorithmDual                      Simplex
+Objective Function                 Z
+Solution Status                    Optimal
+Objective Value                    0.2786983588
+Primal Infeasibility               0
+Dual Infeasibility                 1.156482E-17
+Bound Infeasibility                0
+Iterations4
+Presolve Time                      0.00
+Solution Time                      0.00
+
+Solution
+
+Corn                               0.256027
+Hay                                0.796378
+Soybean                            0.085229
+
 
 /*                                        _                   _
 / |  _ __   _ __   ___    ___  __ _ ___  (_)_ __  _ __  _   _| |_
@@ -309,3 +415,4 @@ run;quit;
  \___|_| |_|\__,_|
 
 */
+
